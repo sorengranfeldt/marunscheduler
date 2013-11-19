@@ -1,0 +1,54 @@
+﻿<MARunScheduler EnableLogging="true" Console="true" LogFile="MARunScheduler-{0:yyyyMMdd}.log">
+  <ClearRunHistory>
+    <ClearRuns>true</ClearRuns>
+    <AgeInMinutes>120</AgeInMinutes>
+  </ClearRunHistory>
+
+  <Thread LoopIndefinitely="false" RepeatCount="1" Name="AD" RunAfter="01:00" RunBefore="23:59" RunOnDays="Mon Thu Fri">
+    <Item RunAfter="08:00" RunBefore="22:00">
+      <Preprocessing></Preprocessing>
+      <PreprocessingArguments></PreprocessingArguments>
+      <MA>AI</MA>
+      <RunProfile>DIDSx</RunProfile>
+      <WaitMinutes>0</WaitMinutes>
+      <Postprocessing></Postprocessing>
+      <PostprocessingArguments></PostprocessingArguments>
+      <ContinueOnFailure>true</ContinueOnFailure>
+      <OnlyRunIfPendingImports>false</OnlyRunIfPendingImports>
+      <OnlyRunIfPendingExports>false</OnlyRunIfPendingExports>
+      <ThresholdLimits>
+        <MaximumPendingImportAdds></MaximumPendingImportAdds>
+        <MaximumPendingImportUpdates></MaximumPendingImportUpdates>
+        <MaximumPendingImportDeletes>10%</MaximumPendingImportDeletes>
+
+        <MaximumPendingExportAdds></MaximumPendingExportAdds>
+        <MaximumPendingExportUpdates></MaximumPendingExportUpdates>
+        <MaximumPendingExportDeletes>100</MaximumPendingExportDeletes>
+      </ThresholdLimits>
+    </Item>
+    <Item RunAfter="00:00" RunBefore="23:59">
+      <Preprocessing></Preprocessing>
+      <PreprocessingArguments></PreprocessingArguments>
+      <MA>AD</MA>
+      <RunProfile>DS</RunProfile>
+      <WaitMinutes>0</WaitMinutes>
+      <Postprocessing></Postprocessing>
+      <PostprocessingArguments></PostprocessingArguments>
+      <ContinueOnFailure>true</ContinueOnFailure>
+      <OnlyRunIfPendingImports>true</OnlyRunIfPendingImports>
+      <OnlyRunIfPendingExports>false</OnlyRunIfPendingExports>
+    </Item>
+  </Thread>
+  <!--<Thread RepeatCount="1" Name="HR" RunOnDays="Mon">
+    <Item>
+      <Preprocessing></Preprocessing>
+      <MA>HR</MA>
+      <RunProfile>FIFS</RunProfile>
+      <WaitMinutes>0</WaitMinutes>
+      <Postprocessing></Postprocessing>
+      <ContinueOnFailure>false</ContinueOnFailure>
+      <OnlyRunIfPendingExports>false</OnlyRunIfPendingExports>
+    </Item>
+  </Thread>-->
+
+</MARunScheduler>

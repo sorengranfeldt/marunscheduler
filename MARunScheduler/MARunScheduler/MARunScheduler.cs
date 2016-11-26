@@ -224,8 +224,8 @@ namespace Granfeldt
 
                 if (string.IsNullOrEmpty(configurationFilename))
                 {
-                    Console.WriteLine("Granfeldt FIM/ILM Management Agent Run Profile Scheduler");
-                    Console.WriteLine("Copyright (c) 2011-2012 Soren Granfeldt. All rights reserved.");
+                    Console.WriteLine("Management Agent Run Profile Scheduler");
+                    Console.WriteLine("Copyright (c) 2011-2016 Soren Granfeldt. All rights reserved.");
                     Console.WriteLine();
 
                     Console.WriteLine("Description: Uses an XML input file to run management agents in a");

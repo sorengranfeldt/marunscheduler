@@ -24,6 +24,8 @@
 // November 5, 2012 | Soren Granfeldt
 //  - added try/catch on eventlog logging if unable to create 
 //    eventlog source
+// November 25, 2016 | Matthew Slowe
+//  - added support for WaitMinutes at the end of a thread
     
 using System;
 using System.Collections.Generic;
@@ -501,6 +503,12 @@ public static int GetNodeCount(XmlDocument xmlDoc, string nodeName) {
                         {
                             LogThread(thread.Name, string.Format("Thread '{0}' won't run due to day or time restrictions", thread.Name));
                         }
+                        if (thread.WaitMinutes > 0)
+                        {
+                            LogThread(thread.Name, thread.WaitMinutes.ToString("Start: Thread waiting 0 minute(s)"));
+                            Thread.Sleep(thread.WaitMinutes * 60000);
+                            LogThread(thread.Name, thread.WaitMinutes.ToString("End: Thread waiting 0 minute(s)"));
+                        }
                         thread.RepeatCount--;
                     }
                 };
@@ -625,6 +633,8 @@ public static int GetNodeCount(XmlDocument xmlDoc, string nodeName) {
             [XmlElement("Item")]
             public List<RunItem> Item = new List<RunItem>();
 
+            [XmlAttribute("WaitMinutes")]
+            public int WaitMinutes { get; set; }
         }
 
         [Serializable]

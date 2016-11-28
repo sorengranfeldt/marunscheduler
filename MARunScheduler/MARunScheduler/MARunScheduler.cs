@@ -26,6 +26,9 @@
 //    eventlog source
 // November 25, 2016 | Matthew Slowe
 //  - added support for WaitMinutes at the end of a thread
+// November 26, 2016 | Matthew Slowe
+//  - added MA name to logged lines
+//  - added option to specify timestamp format in logfile
 
 using System;
 using System.Collections.Generic;

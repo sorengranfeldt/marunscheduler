@@ -74,10 +74,11 @@ namespace Granfeldt
                 string logLine = null;
                 if (configuration != null)
                 {
+                    string now = configuration.LogDateTimeFormat != null ? DateTime.Now.ToString(configuration.LogDateTimeFormat) : DateTime.Now.ToString();
                     string logFilename = configuration.LogFile == null ? "MARunScheduler.log" : string.Format(configuration.LogFile, DateTime.Now);
                     using (StreamWriter l = new StreamWriter(logFilename, true))
                     {
-                        logLine = string.Format("{0:G}: {1}", DateTime.Now, s);
+                        logLine = string.Format("[{0:G}] {1}", now, s);
                         l.WriteLine(logLine);
                         if (configuration.Console)
                         {
@@ -604,6 +605,9 @@ public static int GetNodeCount(XmlDocument xmlDoc, string nodeName) {
 
             [XmlAttribute("LogFile")]
             public string LogFile { get; set; }
+
+            [XmlAttribute("LogDateTimeFormat")]
+            public string LogDateTimeFormat { get; set; }
 
             [XmlElement("ClearRunHistory")]
             public ClearRunHistorySettings ClearRunHistory = new ClearRunHistorySettings();

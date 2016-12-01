@@ -13,7 +13,7 @@
 //  - fixed logging bug where thread didn't use LogThread
 //  - changed AgeInDays to AgeInMinutes
 // July 13, 2012 | Soren Granfeldt
-//	- added support for time intervals for threads and items
+//  - added support for time intervals for threads and items
 // September 23, 2012 | Soren Granfeldt
 //  - added support for day limits for threads and items
 //  - fixed bug for clears runs where time restrictions were not enforced
@@ -26,7 +26,10 @@
 //    eventlog source
 // November 25, 2016 | Matthew Slowe
 //  - added support for WaitMinutes at the end of a thread
-    
+// November 26, 2016 | Matthew Slowe
+//  - added MA name to logged lines
+//  - added option to specify timestamp format in logfile
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -61,6 +64,10 @@ namespace Granfeldt
         {
             Log(string.Format("({0}) {1}", threadName, s));
         }
+        static void LogThreadMA(string threadName, string MAname, string s)
+        {
+            Log(string.Format("({0}:{1}) {2}", threadName, MAname, s));
+        }
         static void Log(string s)
         {
             if (configuration.EnableLogging)
@@ -70,10 +77,11 @@ namespace Granfeldt
                 string logLine = null;
                 if (configuration != null)
                 {
+                    string now = configuration.LogDateTimeFormat != null ? DateTime.Now.ToString(configuration.LogDateTimeFormat) : DateTime.Now.ToString();
                     string logFilename = configuration.LogFile == null ? "MARunScheduler.log" : string.Format(configuration.LogFile, DateTime.Now);
                     using (StreamWriter l = new StreamWriter(logFilename, true))
                     {
-                        logLine = string.Format("{0:G}: {1}", DateTime.Now, s);
+                        logLine = string.Format("[{0:G}] {1}", now, s);
                         l.WriteLine(logLine);
                         if (configuration.Console)
                         {
@@ -308,9 +316,9 @@ namespace Granfeldt
                                     runItemRunAfter = defaultItemRunAfter;
                                 }
 
-                                LogThread(thread.Name, string.Format("Run Profile item should run before {0}", runItemRunBefore.TimeOfDay));
-                                LogThread(thread.Name, string.Format("Run Profile item should after {0}", runItemRunAfter.TimeOfDay));
-                                LogThread(thread.Name, string.Format("Run Profile item should on {0}", string.IsNullOrEmpty(ri.RunOnDays) ? "all days" : ri.RunOnDays));
+                                LogThreadMA(thread.Name, ri.MA, string.Format("Run Profile item should run before {0}", runItemRunBefore.TimeOfDay));
+                                LogThreadMA(thread.Name, ri.MA, string.Format("Run Profile item should after {0}", runItemRunAfter.TimeOfDay));
+                                LogThreadMA(thread.Name, ri.MA, string.Format("Run Profile item should on {0}", string.IsNullOrEmpty(ri.RunOnDays) ? "all days" : ri.RunOnDays));
                                 if ((DateTime.Now.TimeOfDay > runItemRunAfter.TimeOfDay && DateTime.Now.TimeOfDay < runItemRunBefore.TimeOfDay && RunToday(ri.RunOnDays)))
                                 {
                                     #region Pre processing
@@ -336,7 +344,7 @@ namespace Granfeldt
                                         Enum.MoveNext();
                                         ManagementObject MAObject = (ManagementObject)Enum.Current;
 
-                                        LogThread(thread.Name, string.Format("Connected to MA '{0}' (Type: {1}, GUID: {2})", MAObject["name"].ToString(), MAObject["type"].ToString(), MAObject["Guid"].ToString()));
+                                        LogThreadMA(thread.Name, ri.MA, string.Format("Connected to MA '{0}' (Type: {1}, GUID: {2})", MAObject["name"].ToString(), MAObject["type"].ToString(), MAObject["Guid"].ToString()));
 
                                         List<string> param = new List<string>();
                                         if (!string.IsNullOrEmpty(ri.RunProfile))
@@ -345,34 +353,34 @@ namespace Granfeldt
                                         }
 
                                         long NumCSObjects = long.Parse((string)MAObject.InvokeMethod("NumCSObjects", null));
-                                        LogThread(thread.Name, string.Format("Number of CS object(s): {0:n0}", NumCSObjects));
+                                        LogThreadMA(thread.Name, ri.MA, string.Format("Number of CS object(s): {0:n0}", NumCSObjects));
 
                                         long NumTotalConnectors = long.Parse((string)MAObject.InvokeMethod("NumTotalConnectors", null));
-                                        LogThread(thread.Name, string.Format("Number of connectors: {0:n0}", NumTotalConnectors));
+                                        LogThreadMA(thread.Name, ri.MA, string.Format("Number of connectors: {0:n0}", NumTotalConnectors));
 
                                         long NumTotalDisconnectors = long.Parse((string)MAObject.InvokeMethod("NumTotalDisconnectors", null));
-                                        LogThread(thread.Name, string.Format("Number of disconnectors: {0:n0}", NumTotalDisconnectors));
+                                        LogThreadMA(thread.Name, ri.MA, string.Format("Number of disconnectors: {0:n0}", NumTotalDisconnectors));
 
                                         // pending imports
                                         long PendingImportAdds = long.Parse((string)MAObject.InvokeMethod("NumImportAdd", null));
-                                        LogThread(thread.Name, string.Format("Pending Import Add(s): {0:n0}", PendingImportAdds));
+                                        LogThreadMA(thread.Name, ri.MA, string.Format("Pending Import Add(s): {0:n0}", PendingImportAdds));
 
                                         long PendingImportUpdates = long.Parse((string)MAObject.InvokeMethod("NumImportUpdate", null));
-                                        LogThread(thread.Name, string.Format("Pending Import Update(s): {0:n0}", PendingImportUpdates));
+                                        LogThreadMA(thread.Name, ri.MA, string.Format("Pending Import Update(s): {0:n0}", PendingImportUpdates));
 
                                         long PendingImportDeletes = long.Parse((string)MAObject.InvokeMethod("NumImportDelete", null));
-                                        LogThread(thread.Name, string.Format("Pending Import Delete(s): {0:n0}", PendingImportDeletes));
+                                        LogThreadMA(thread.Name, ri.MA, string.Format("Pending Import Delete(s): {0:n0}", PendingImportDeletes));
 
 
                                         // pending exports
                                         long PendingExportAdds = long.Parse((string)MAObject.InvokeMethod("NumExportAdd", null));
-                                        LogThread(thread.Name, string.Format("Pending Export Add(s): {0:n0}", PendingExportAdds));
+                                        LogThreadMA(thread.Name, ri.MA, string.Format("Pending Export Add(s): {0:n0}", PendingExportAdds));
 
                                         long PendingExportUpdates = long.Parse((string)MAObject.InvokeMethod("NumExportUpdate", null));
-                                        LogThread(thread.Name, string.Format("Pending Export Update(s): {0:n0}", PendingExportUpdates));
+                                        LogThreadMA(thread.Name, ri.MA, string.Format("Pending Export Update(s): {0:n0}", PendingExportUpdates));
 
                                         long PendingExportDeletes = long.Parse((string)MAObject.InvokeMethod("NumExportDelete", null));
-                                        LogThread(thread.Name, string.Format("Pending Export Delete(s): {0:n0}", PendingExportDeletes));
+                                        LogThreadMA(thread.Name, ri.MA, string.Format("Pending Export Delete(s): {0:n0}", PendingExportDeletes));
 
                                         bool thresholdsMet = false;
                                         if (ri.ThresholdLimits != null)
@@ -387,22 +395,22 @@ namespace Granfeldt
 
                                         if (thresholdsMet)
                                         {
-                                            LogThread(thread.Name, "One or more thresholds met. Skipping run profile");
+                                            LogThreadMA(thread.Name, ri.MA, "One or more thresholds met. Skipping run profile");
                                         }
                                         else
                                         {
-                                            LogThread(thread.Name, string.Format("Only run on pending imports: {0:n0}", ri.OnlyRunIfPendingImports));
-                                            LogThread(thread.Name, string.Format("Only run on pending exports: {0:n0}", ri.OnlyRunIfPendingExports));
-                                            if ( ((ri.OnlyRunIfPendingExports && (PendingExportAdds + PendingExportUpdates + PendingExportDeletes) > 0) || !ri.OnlyRunIfPendingExports) && 
+                                            LogThreadMA(thread.Name, ri.MA, string.Format("Only run on pending imports: {0:n0}", ri.OnlyRunIfPendingImports));
+                                            LogThreadMA(thread.Name, ri.MA, string.Format("Only run on pending exports: {0:n0}", ri.OnlyRunIfPendingExports));
+                                            if (((ri.OnlyRunIfPendingExports && (PendingExportAdds + PendingExportUpdates + PendingExportDeletes) > 0) || !ri.OnlyRunIfPendingExports) &&
                                                 ((ri.OnlyRunIfPendingImports && (PendingImportAdds + PendingImportUpdates + PendingImportDeletes) > 0) || !ri.OnlyRunIfPendingImports))
                                             {
-                                                LogThread(thread.Name, string.Format("Running: '{0}'", ri.RunProfile));
+                                                LogThreadMA(thread.Name, ri.MA, string.Format("Running: '{0}'", ri.RunProfile));
                                                 result = (string)MAObject.InvokeMethod("Execute", param.ToArray());
-                                                LogThread(thread.Name, string.Format("Run result: {0}", result));
+                                                LogThreadMA(thread.Name, ri.MA, string.Format("Run result: {0}", result));
                                             }
                                             else
                                             {
-                                                LogThread(thread.Name, string.Format("There are no pending imports/exports; skipping run"));
+                                                LogThreadMA(thread.Name, ri.MA, string.Format("There are no pending imports/exports; skipping run"));
                                             }
                                         }
 
@@ -412,7 +420,7 @@ namespace Granfeldt
                                     {
 
                                         Log(new Exception("Error connecting to MA"), ERROR_COULDNOTCONNECTOMANAGEMENTAGENT);
-                                        LogThread(thread.Name, string.Format("Error: Unable to connect to Management Agent '{0}'", ri.MA));
+                                        LogThreadMA(thread.Name, ri.MA, string.Format("Error: Unable to connect to Management Agent '{0}'", ri.MA));
                                     }
 
                                     #endregion
@@ -485,16 +493,16 @@ public static int GetNodeCount(XmlDocument xmlDoc, string nodeName) {
 
                                     if (ri.WaitMinutes > 0)
                                     {
-                                        LogThread(thread.Name, ri.WaitMinutes.ToString("Start: Waiting 0 minute(s)"));
+                                        LogThreadMA(thread.Name, ri.MA, ri.WaitMinutes.ToString("Start: Waiting 0 minute(s)"));
                                         Thread.Sleep(ri.WaitMinutes * 60000);
-                                        LogThread(thread.Name, ri.WaitMinutes.ToString("End: Waiting 0 minute(s)"));
+                                        LogThreadMA(thread.Name, ri.MA, ri.WaitMinutes.ToString("End: Waiting 0 minute(s)"));
                                     }
 
                                     #endregion
                                 }
                                 else
                                 {
-                                    LogThread(thread.Name, string.Format("Item '{0}' won't run due to day or time restrictions", ri.MA));
+                                    LogThreadMA(thread.Name, ri.MA, string.Format("Item '{0}' won't run due to day or time restrictions", ri.MA));
                                 }
                             }
                             LogThread(thread.Name, string.Format("Ending cycle #{0}", repeatCount - thread.RepeatCount));
@@ -600,6 +608,9 @@ public static int GetNodeCount(XmlDocument xmlDoc, string nodeName) {
 
             [XmlAttribute("LogFile")]
             public string LogFile { get; set; }
+
+            [XmlAttribute("LogDateTimeFormat")]
+            public string LogDateTimeFormat { get; set; }
 
             [XmlElement("ClearRunHistory")]
             public ClearRunHistorySettings ClearRunHistory = new ClearRunHistorySettings();

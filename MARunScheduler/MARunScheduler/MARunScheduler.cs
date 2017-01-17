@@ -29,6 +29,8 @@
 // November 26, 2016 | Matthew Slowe
 //  - added MA name to logged lines
 //  - added option to specify timestamp format in logfile
+// January, 2017 | Soren Granfeldt
+//  - added some housekeeping / cleanup / dispose code
 
 using System;
 using System.Collections.Generic;
@@ -534,6 +536,7 @@ public static int GetNodeCount(XmlDocument xmlDoc, string nodeName) {
                 {
                     t.Wait();
                 }
+                tasks.Clear();
                 tasks = null;
 
                 #region Clearing run histories
@@ -561,9 +564,12 @@ public static int GetNodeCount(XmlDocument xmlDoc, string nodeName) {
                             }
                         }
                     }
+                    clearRunsMASearcher.Dispose();
+                    clearRunsMAObjects.Dispose();
                 }
                 #endregion
 
+                WMInamespace = null;
                 Log("Ended");
             }
             catch (FileNotFoundException fileNotFoundException)

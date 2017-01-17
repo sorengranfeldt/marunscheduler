@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("MARunScheduler")]
-[assembly: AssemblyDescription("Run Profile Scheduler for Forefront Identity Manager 2010")]
+[assembly: AssemblyDescription("Run Profile Scheduler for FIM 2010 and MIM 2016")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Goverco")]
 [assembly: AssemblyProduct("MARunScheduler")]
-[assembly: AssemblyCopyright("Copyright © 2011-2016, Soren Granfeldt")]
+[assembly: AssemblyCopyright("Copyright © 2011-2017, Soren Granfeldt")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.3.3.0")]
-[assembly: AssemblyFileVersion("1.3.3.0")]
+[assembly: AssemblyVersion("1.3.4.0")]
+[assembly: AssemblyFileVersion("1.3.4.0")]

@@ -93,8 +93,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extension\StringLogginExtension.cs" />
     <Compile Include="MARunScheduler.cs" />
     <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="Model\Condition.Between.cs" />
+    <Compile Include="Model\Condition.HourSpan.cs" />
+    <Compile Include="Model\Condition.MinuteSpan.cs" />
+    <Compile Include="Model\Condition.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="MARunScheduler.ico" />

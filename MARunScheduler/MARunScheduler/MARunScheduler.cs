@@ -31,6 +31,9 @@
 //  - added option to specify timestamp format in logfile
 // January, 2017 | Soren Granfeldt
 //  - added some housekeeping / cleanup / dispose code
+// november 10, 2020 | Soren Granfeldt
+//  - added new Conditions element: Options WithinMinutesSpan, SubCondition and Between (see more in documentation)
+//  - added options to constrict runs for minute intervals in hour (to only run certain minutes spans within an hour)
 
 using System;
 using System.Collections.Generic;
@@ -235,7 +238,7 @@ namespace Granfeldt
                 if (string.IsNullOrEmpty(configurationFilename))
                 {
                     Console.WriteLine("Management Agent Run Profile Scheduler");
-                    Console.WriteLine("Copyright (c) 2011-2016 Soren Granfeldt. All rights reserved.");
+                    Console.WriteLine("Copyright (c) 2011-2022 Soren Granfeldt. All rights reserved.");
                     Console.WriteLine();
 
                     Console.WriteLine("Description: Uses an XML input file to run management agents in a");
@@ -321,7 +324,12 @@ namespace Granfeldt
                                 LogThreadMA(thread.Name, ri.MA, string.Format("Run Profile item should run before {0}", runItemRunBefore.TimeOfDay));
                                 LogThreadMA(thread.Name, ri.MA, string.Format("Run Profile item should after {0}", runItemRunAfter.TimeOfDay));
                                 LogThreadMA(thread.Name, ri.MA, string.Format("Run Profile item should on {0}", string.IsNullOrEmpty(ri.RunOnDays) ? "all days" : ri.RunOnDays));
-                                if ((DateTime.Now.TimeOfDay > runItemRunAfter.TimeOfDay && DateTime.Now.TimeOfDay < runItemRunBefore.TimeOfDay && RunToday(ri.RunOnDays)))
+                                bool itemConditionsMet = ri.Conditions.AreMet();
+                                LogThreadMA(thread.Name, ri.MA, $"Conditions {(itemConditionsMet ? "met" : "NOT met")}");
+                                if ((DateTime.Now.TimeOfDay > runItemRunAfter.TimeOfDay &&
+                                     DateTime.Now.TimeOfDay < runItemRunBefore.TimeOfDay &&
+                                     RunToday(ri.RunOnDays) && itemConditionsMet)
+                                     )
                                 {
                                     #region Pre processing
 
@@ -504,7 +512,7 @@ public static int GetNodeCount(XmlDocument xmlDoc, string nodeName) {
                                 }
                                 else
                                 {
-                                    LogThreadMA(thread.Name, ri.MA, string.Format("Item '{0}' won't run due to day or time restrictions", ri.MA));
+                                    LogThreadMA(thread.Name, ri.MA, string.Format("Item '{0}' won't run due to day, time or condition restrictions", ri.MA));
                                 }
                             }
                             LogThread(thread.Name, string.Format("Ending cycle #{0}", repeatCount - thread.RepeatCount));
@@ -675,6 +683,8 @@ public static int GetNodeCount(XmlDocument xmlDoc, string nodeName) {
 
             public ThresholdLimits ThresholdLimits { get; set; }
 
+            public Conditions Conditions { get; set; }
+
             public bool OnlyRunIfPendingExports { get; set; }
             public bool OnlyRunIfPendingImports { get; set; }
             public string Preprocessing { get; set; }
@@ -685,12 +695,16 @@ public static int GetNodeCount(XmlDocument xmlDoc, string nodeName) {
             public string Postprocessing { get; set; }
             public string PostprocessingArguments { get; set; }
             public bool ContinueOnFailure { get; set; }
+            public RunItem()
+            {
+                this.Conditions = this.Conditions ?? new Conditions();
+            }
+
         }
 
         [Serializable]
         public class ThresholdLimits
         {
-
             public string MaximumPendingImportAdds { get; set; }
             public string MaximumPendingImportUpdates { get; set; }
             public string MaximumPendingImportDeletes { get; set; }

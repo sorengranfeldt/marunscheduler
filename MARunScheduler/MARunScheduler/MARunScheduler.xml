@@ -1,69 +1,67 @@
-﻿<MARunScheduler EnableLogging="true" Console="true" LogFile="MARunScheduler-{0:yyyyMMdd}.log"
+﻿<MARunScheduler EnableLogging="true" Console="true" LogFile="MARunScheduler-{0:yyyyMMdd}.log" WMITimeOutSeconds="30"
                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <ClearRunHistory>
-    <ClearRuns>true</ClearRuns>
-    <AgeInMinutes>120</AgeInMinutes>
-  </ClearRunHistory>
+	<ClearRunHistory>
+		<ClearRuns>true</ClearRuns>
+		<AgeInMinutes>120</AgeInMinutes>
+	</ClearRunHistory>
 
-  <Thread RepeatCount="1" Name="HR">
-    <Item>
+	<Thread RepeatCount="1" Name="HR">
+		<Item>
 
-<Conditions Operator="And">
-  <Condition xsi:type="Between" From="07:00" To="17:00" />
-  <Condition xsi:type="SubCondition" Operator="And">
-    <Condition xsi:type="WithinMinutesSpan" From="00" To="05" />
-    <Condition xsi:type="WithinMinutesSpan" From="30" To="35" />
-  </Condition>
-</Conditions>
+			<Conditions Operator="And">
+				<Condition xsi:type="Between" From="07:00" To="17:00" />
+				<Condition xsi:type="SubCondition" Operator="And">
+					<Condition xsi:type="WithinMinutesSpan" From="00" To="05" />
+					<Condition xsi:type="WithinMinutesSpan" From="30" To="35" />
+				</Condition>
+			</Conditions>
 
-      <Preprocessing></Preprocessing>
-      <MA>HR</MA>
-      <RunProfile>FIFS</RunProfile>
-      <WaitMinutes>0</WaitMinutes>
-      <Postprocessing></Postprocessing>
-      <ContinueOnFailure>false</ContinueOnFailure>
-      <OnlyRunIfPendingExports>false</OnlyRunIfPendingExports>
-    </Item>
-  </Thread>
+			<Preprocessing></Preprocessing>
+			<MA>HR</MA>
+			<RunProfile>FIFS</RunProfile>
+			<WaitMinutes>0</WaitMinutes>
+			<Postprocessing></Postprocessing>
+			<ContinueOnFailure>false</ContinueOnFailure>
+			<OnlyRunIfPendingExports>false</OnlyRunIfPendingExports>
+		</Item>
+	</Thread>
 
-  <Thread LoopIndefinitely="false" RepeatCount="1" Name="AD" RunAfter="01:00" RunBefore="23:59" RunOnDays="Mon Thu Fri">
-    <Item RunAfter="08:00" RunBefore="22:00">
+	<Thread LoopIndefinitely="false" RepeatCount="1" Name="AD" RunAfter="01:00" RunBefore="23:59" RunOnDays="Mon Thu Fri">
+		<Item RunAfter="08:00" RunBefore="22:00">
 
+			<Preprocessing></Preprocessing>
+			<PreprocessingArguments></PreprocessingArguments>
+			<MA>AI</MA>
+			<RunProfile>DIDSx</RunProfile>
+			<WaitMinutes>0</WaitMinutes>
+			<Postprocessing></Postprocessing>
+			<PostprocessingArguments></PostprocessingArguments>
+			<ContinueOnFailure>true</ContinueOnFailure>
+			<OnlyRunIfPendingImports>false</OnlyRunIfPendingImports>
+			<OnlyRunIfPendingExports>false</OnlyRunIfPendingExports>
+			<ThresholdLimits>
+				<MaximumPendingImportAdds></MaximumPendingImportAdds>
+				<MaximumPendingImportUpdates></MaximumPendingImportUpdates>
+				<MaximumPendingImportDeletes>10%</MaximumPendingImportDeletes>
 
-
-      <Preprocessing></Preprocessing>
-      <PreprocessingArguments></PreprocessingArguments>
-      <MA>AI</MA>
-      <RunProfile>DIDSx</RunProfile>
-      <WaitMinutes>0</WaitMinutes>
-      <Postprocessing></Postprocessing>
-      <PostprocessingArguments></PostprocessingArguments>
-      <ContinueOnFailure>true</ContinueOnFailure>
-      <OnlyRunIfPendingImports>false</OnlyRunIfPendingImports>
-      <OnlyRunIfPendingExports>false</OnlyRunIfPendingExports>
-      <ThresholdLimits>
-        <MaximumPendingImportAdds></MaximumPendingImportAdds>
-        <MaximumPendingImportUpdates></MaximumPendingImportUpdates>
-        <MaximumPendingImportDeletes>10%</MaximumPendingImportDeletes>
-
-        <MaximumPendingExportAdds></MaximumPendingExportAdds>
-        <MaximumPendingExportUpdates></MaximumPendingExportUpdates>
-        <MaximumPendingExportDeletes>100</MaximumPendingExportDeletes>
-      </ThresholdLimits>
-    </Item>
-    <Item RunAfter="00:00" RunBefore="23:59">
-      <Preprocessing></Preprocessing>
-      <PreprocessingArguments></PreprocessingArguments>
-      <MA>AD</MA>
-      <RunProfile>DS</RunProfile>
-      <WaitMinutes>0</WaitMinutes>
-      <Postprocessing></Postprocessing>
-      <PostprocessingArguments></PostprocessingArguments>
-      <ContinueOnFailure>true</ContinueOnFailure>
-      <OnlyRunIfPendingImports>true</OnlyRunIfPendingImports>
-      <OnlyRunIfPendingExports>false</OnlyRunIfPendingExports>
-    </Item>
-  </Thread>
+				<MaximumPendingExportAdds></MaximumPendingExportAdds>
+				<MaximumPendingExportUpdates></MaximumPendingExportUpdates>
+				<MaximumPendingExportDeletes>100</MaximumPendingExportDeletes>
+			</ThresholdLimits>
+		</Item>
+		<Item RunAfter="00:00" RunBefore="23:59">
+			<Preprocessing></Preprocessing>
+			<PreprocessingArguments></PreprocessingArguments>
+			<MA>AD</MA>
+			<RunProfile>DS</RunProfile>
+			<WaitMinutes>0</WaitMinutes>
+			<Postprocessing></Postprocessing>
+			<PostprocessingArguments></PostprocessingArguments>
+			<ContinueOnFailure>true</ContinueOnFailure>
+			<OnlyRunIfPendingImports>true</OnlyRunIfPendingImports>
+			<OnlyRunIfPendingExports>false</OnlyRunIfPendingExports>
+		</Item>
+	</Thread>
 
 
 </MARunScheduler>

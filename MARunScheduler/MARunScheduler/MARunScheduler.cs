@@ -34,6 +34,8 @@
 // november 10, 2020 | Soren Granfeldt
 //  - added new Conditions element: Options WithinMinutesSpan, SubCondition and Between (see more in documentation)
 //  - added options to constrict runs for minute intervals in hour (to only run certain minutes spans within an hour)
+// march 29, 2023 | Soren Granfeldt
+//  - added WMITimeout option for MARunScheduler element
 
 using System;
 using System.Collections.Generic;
@@ -56,6 +58,8 @@ namespace Granfeldt
         const int ERROR_COULDNOTCONNECTOMANAGEMENTAGENT = 1001;
         const int ERROR_CONFIGURATIONFILENOTFOUND = 1002;
         const int WARNING_THRESHOLDMET = 2001;
+
+        const int WMIDefaultTimeOut = 600;
 
         const string EventLogSource = "MARunScheduler";
         const string EventLogName = "Application";
@@ -238,7 +242,7 @@ namespace Granfeldt
                 if (string.IsNullOrEmpty(configurationFilename))
                 {
                     Console.WriteLine("Management Agent Run Profile Scheduler");
-                    Console.WriteLine("Copyright (c) 2011-2022 Soren Granfeldt. All rights reserved.");
+                    Console.WriteLine("Copyright (c) 2011-2023 Soren Granfeldt. All rights reserved.");
                     Console.WriteLine();
 
                     Console.WriteLine("Description: Uses an XML input file to run management agents in a");
@@ -346,6 +350,8 @@ namespace Granfeldt
 
                                     ObjectQuery managementAgentQuery = new ObjectQuery(managementAgentQueryString);
                                     ManagementObjectSearcher MASearcher = new ManagementObjectSearcher(WMInamespace, managementAgentQuery);
+                                    MASearcher.Options.Timeout = TimeSpan.FromSeconds(configuration.WMITimeOutSeconds.GetValueOrDefault(WMIDefaultTimeOut));
+
                                     ManagementObjectCollection MAObjects = MASearcher.Get();
                                     string result = "management-agent-not-found";
                                     if (MAObjects.Count == 1)
@@ -414,7 +420,7 @@ namespace Granfeldt
                                             if (((ri.OnlyRunIfPendingExports && (PendingExportAdds + PendingExportUpdates + PendingExportDeletes) > 0) || !ri.OnlyRunIfPendingExports) &&
                                                 ((ri.OnlyRunIfPendingImports && (PendingImportAdds + PendingImportUpdates + PendingImportDeletes) > 0) || !ri.OnlyRunIfPendingImports))
                                             {
-                                                LogThreadMA(thread.Name, ri.MA, string.Format("Running: '{0}'", ri.RunProfile));
+                                                LogThreadMA(thread.Name, ri.MA, string.Format("Running: '{0}', timeout: {1}", ri.RunProfile, configuration.WMITimeOutSeconds));
                                                 result = (string)MAObject.InvokeMethod("Execute", param.ToArray());
                                                 LogThreadMA(thread.Name, ri.MA, string.Format("Run result: {0}", result));
                                             }
@@ -552,6 +558,7 @@ public static int GetNodeCount(XmlDocument xmlDoc, string nodeName) {
                 {
                     ObjectQuery cleartAgentQuery = new ObjectQuery(string.Format("SELECT * FROM MIIS_Server", serverName));
                     ManagementObjectSearcher clearRunsMASearcher = new ManagementObjectSearcher(WMInamespace, cleartAgentQuery);
+                    clearRunsMASearcher.Options.Timeout = TimeSpan.FromSeconds(configuration.WMITimeOutSeconds.GetValueOrDefault(WMIDefaultTimeOut));
                     ManagementObjectCollection clearRunsMAObjects = clearRunsMASearcher.Get();
                     if (clearRunsMAObjects.Count == 0)
                     {
@@ -622,6 +629,9 @@ public static int GetNodeCount(XmlDocument xmlDoc, string nodeName) {
 
             [XmlAttribute("LogFile")]
             public string LogFile { get; set; }
+
+            [XmlAttribute("WMITimeoutSeconds")]
+            public int? WMITimeOutSeconds { get; set; }
 
             [XmlAttribute("LogDateTimeFormat")]
             public string LogDateTimeFormat { get; set; }

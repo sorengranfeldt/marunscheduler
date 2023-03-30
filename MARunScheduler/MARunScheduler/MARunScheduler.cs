@@ -136,7 +136,6 @@ namespace Granfeldt
         {
             foreach (int i in values)
             {
-                Log($"WMI: {i}");
                 if (i > 0)
                     return i;
             }

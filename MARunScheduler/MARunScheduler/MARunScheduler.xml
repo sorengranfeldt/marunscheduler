@@ -5,8 +5,8 @@
 		<AgeInMinutes>120</AgeInMinutes>
 	</ClearRunHistory>
 
-	<Thread RepeatCount="1" Name="HR">
-		<Item>
+	<Thread RepeatCount="1" Name="HR" WMITimeOutSeconds="15">
+		<Item WMITimeOutSeconds="14">
 
 			<Conditions Operator="And">
 				<Condition xsi:type="Between" From="07:00" To="17:00" />
@@ -26,8 +26,8 @@
 		</Item>
 	</Thread>
 
-	<Thread LoopIndefinitely="false" RepeatCount="1" Name="AD" RunAfter="01:00" RunBefore="23:59" RunOnDays="Mon Thu Fri">
-		<Item RunAfter="08:00" RunBefore="22:00">
+	<Thread LoopIndefinitely="false" RepeatCount="1" Name="AD" RunAfter="01:00" RunBefore="23:59" RunOnDays="Mon Thu Fri" WMITimeOutSeconds="23">
+		<Item RunAfter="08:00" RunBefore="22:00" WMITimeOutSeconds="13">
 
 			<Preprocessing></Preprocessing>
 			<PreprocessingArguments></PreprocessingArguments>

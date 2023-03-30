@@ -34,10 +34,13 @@
 // november 10, 2020 | Soren Granfeldt
 //  - added new Conditions element: Options WithinMinutesSpan, SubCondition and Between (see more in documentation)
 //  - added options to constrict runs for minute intervals in hour (to only run certain minutes spans within an hour)
+// march 29, 2023 | Soren Granfeldt
+//  - added WMITimeout option for MARunScheduler elements
 
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Management;
@@ -45,7 +48,6 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
-using System.Globalization;
 
 namespace Granfeldt
 {
@@ -56,6 +58,8 @@ namespace Granfeldt
         const int ERROR_COULDNOTCONNECTOMANAGEMENTAGENT = 1001;
         const int ERROR_CONFIGURATIONFILENOTFOUND = 1002;
         const int WARNING_THRESHOLDMET = 2001;
+
+        const int WMIDefaultTimeOut = 600;
 
         const string EventLogSource = "MARunScheduler";
         const string EventLogName = "Application";
@@ -127,6 +131,17 @@ namespace Granfeldt
         }
 
         #endregion
+
+        static int FirstValueGreaterThanZero(List<int> values, int defaultValue)
+        {
+            foreach (int i in values)
+            {
+                Log($"WMI: {i}");
+                if (i > 0)
+                    return i;
+            }
+            return defaultValue;
+        }
 
         public static int ExecuteCommand(string threadName, string command, string arguments, string result)
         {
@@ -220,7 +235,7 @@ namespace Granfeldt
             try
             {
                 string serverName = System.Environment.MachineName;
-                string configurationFilename = null;
+                string configurationFilename = "MARunScheduler.xml";
                 foreach (string arg in args.ToList<string>())
                 {
                     if (arg.StartsWith("/s:", StringComparison.InvariantCultureIgnoreCase))
@@ -238,7 +253,7 @@ namespace Granfeldt
                 if (string.IsNullOrEmpty(configurationFilename))
                 {
                     Console.WriteLine("Management Agent Run Profile Scheduler");
-                    Console.WriteLine("Copyright (c) 2011-2022 Soren Granfeldt. All rights reserved.");
+                    Console.WriteLine("Copyright (c) 2011-2023 Soren Granfeldt. All rights reserved.");
                     Console.WriteLine();
 
                     Console.WriteLine("Description: Uses an XML input file to run management agents in a");
@@ -346,6 +361,8 @@ namespace Granfeldt
 
                                     ObjectQuery managementAgentQuery = new ObjectQuery(managementAgentQueryString);
                                     ManagementObjectSearcher MASearcher = new ManagementObjectSearcher(WMInamespace, managementAgentQuery);
+                                    MASearcher.Options.Timeout = TimeSpan.FromSeconds(FirstValueGreaterThanZero(new List<int> { ri.WMITimeOutSeconds, thread.WMITimeOutSeconds, configuration.WMITimeOutSeconds }, WMIDefaultTimeOut));
+
                                     ManagementObjectCollection MAObjects = MASearcher.Get();
                                     string result = "management-agent-not-found";
                                     if (MAObjects.Count == 1)
@@ -414,7 +431,7 @@ namespace Granfeldt
                                             if (((ri.OnlyRunIfPendingExports && (PendingExportAdds + PendingExportUpdates + PendingExportDeletes) > 0) || !ri.OnlyRunIfPendingExports) &&
                                                 ((ri.OnlyRunIfPendingImports && (PendingImportAdds + PendingImportUpdates + PendingImportDeletes) > 0) || !ri.OnlyRunIfPendingImports))
                                             {
-                                                LogThreadMA(thread.Name, ri.MA, string.Format("Running: '{0}'", ri.RunProfile));
+                                                LogThreadMA(thread.Name, ri.MA, $"Running: '{ri.RunProfile}', time-out: {MASearcher.Options.Timeout.TotalSeconds}s");
                                                 result = (string)MAObject.InvokeMethod("Execute", param.ToArray());
                                                 LogThreadMA(thread.Name, ri.MA, string.Format("Run result: {0}", result));
                                             }
@@ -437,51 +454,51 @@ namespace Granfeldt
 
                                     #region RunDetails
                                     /*
-                             // Check Run For Errors
-switch (maResult.ToLower()) {
-    case "success":
-    case "completed-no-objects":
-    case "completed-warnings":
-        break;
-    case "completed-export-errors":
-        throw( new ApplicationException( "The Management Agent '" + maName + 
-            "' reported import errors on execution. " +
-            "You will need to use the Identity Manager to determine the problem(s)." ) );
-    default:
-        throw( new ApplicationException( "The Management Agent '" + maName + 
-            "' failed on execution. The error returned is '" + maResult + "'" ) );
-}
-// Fetch the run details for the ma
-object xmlContent = ma.InvokeMethod( "RunDetails", null );
-XmlDocument xmlDoc = new XmlDocument();
-xmlDoc.LoadXml( xmlContent.ToString() );
-// Check Run Stage Count
-int runStateCount = 0;
-runStateCount += GetNodeCount( xmlDoc, "stage-add" );
-runStateCount += GetNodeCount( xmlDoc, "stage-update" );
-runStateCount += GetNodeCount( xmlDoc, "stage-rename" );
-runStateCount += GetNodeCount( xmlDoc, "stage-delete" );
-runStateCount += GetNodeCount( xmlDoc, "stage-delete-add" );
-// Check Export Count
-int exportCount = 0;
-exportCount += GetNodeCount( xmlDoc, "export-add" );
-exportCount += GetNodeCount( xmlDoc, "export-update" );
-exportCount += GetNodeCount( xmlDoc, "export-rename" );
-exportCount += GetNodeCount( xmlDoc, "export-delete" );
-exportCount += GetNodeCount( xmlDoc, "export-delete-add" );
-public static int GetNodeCount(XmlDocument xmlDoc, string nodeName) {
-    int returnCount = 0;
-    XmlNodeList nodes = xmlDoc.DocumentElement.GetElementsByTagName( nodeName );
-    if ((nodes != null) && (nodes.Count > 0)) {
-        foreach (XmlNode node in nodes) {
-            if (node.InnerText.Length > 0) {
-                returnCount += int.Parse( node.InnerText );
-            }
-        }
-    }
-    return returnCount;
-}
-                             * */
+                                    // Check Run For Errors
+                                    switch (maResult.ToLower()) {
+                                    case "success":
+                                    case "completed-no-objects":
+                                    case "completed-warnings":
+                                    break;
+                                    case "completed-export-errors":
+                                    throw( new ApplicationException( "The Management Agent '" + maName + 
+                                    "' reported import errors on execution. " +
+                                    "You will need to use the Identity Manager to determine the problem(s)." ) );
+                                    default:
+                                    throw( new ApplicationException( "The Management Agent '" + maName + 
+                                    "' failed on execution. The error returned is '" + maResult + "'" ) );
+                                    }
+                                    // Fetch the run details for the ma
+                                    object xmlContent = ma.InvokeMethod( "RunDetails", null );
+                                    XmlDocument xmlDoc = new XmlDocument();
+                                    xmlDoc.LoadXml( xmlContent.ToString() );
+                                    // Check Run Stage Count
+                                    int runStateCount = 0;
+                                    runStateCount += GetNodeCount( xmlDoc, "stage-add" );
+                                    runStateCount += GetNodeCount( xmlDoc, "stage-update" );
+                                    runStateCount += GetNodeCount( xmlDoc, "stage-rename" );
+                                    runStateCount += GetNodeCount( xmlDoc, "stage-delete" );
+                                    runStateCount += GetNodeCount( xmlDoc, "stage-delete-add" );
+                                    // Check Export Count
+                                    int exportCount = 0;
+                                    exportCount += GetNodeCount( xmlDoc, "export-add" );
+                                    exportCount += GetNodeCount( xmlDoc, "export-update" );
+                                    exportCount += GetNodeCount( xmlDoc, "export-rename" );
+                                    exportCount += GetNodeCount( xmlDoc, "export-delete" );
+                                    exportCount += GetNodeCount( xmlDoc, "export-delete-add" );
+                                    public static int GetNodeCount(XmlDocument xmlDoc, string nodeName) {
+                                    int returnCount = 0;
+                                    XmlNodeList nodes = xmlDoc.DocumentElement.GetElementsByTagName( nodeName );
+                                    if ((nodes != null) && (nodes.Count > 0)) {
+                                    foreach (XmlNode node in nodes) {
+                                    if (node.InnerText.Length > 0) {
+                                    returnCount += int.Parse( node.InnerText );
+                                    }
+                                    }
+                                    }
+                                    return returnCount;
+                                    }
+                                    * */
 
                                     #endregion
 
@@ -552,6 +569,7 @@ public static int GetNodeCount(XmlDocument xmlDoc, string nodeName) {
                 {
                     ObjectQuery cleartAgentQuery = new ObjectQuery(string.Format("SELECT * FROM MIIS_Server", serverName));
                     ManagementObjectSearcher clearRunsMASearcher = new ManagementObjectSearcher(WMInamespace, cleartAgentQuery);
+                    clearRunsMASearcher.Options.Timeout = TimeSpan.FromSeconds(FirstValueGreaterThanZero(new List<int> { configuration.ClearRunHistory.WMITimeOutSeconds, configuration.WMITimeOutSeconds }, WMIDefaultTimeOut));
                     ManagementObjectCollection clearRunsMAObjects = clearRunsMASearcher.Get();
                     if (clearRunsMAObjects.Count == 0)
                     {
@@ -562,7 +580,7 @@ public static int GetNodeCount(XmlDocument xmlDoc, string nodeName) {
                         foreach (ManagementObject oReturn in clearRunsMAObjects)
                         {
                             DateTime clearDate = DateTime.Now.AddMinutes(-configuration.ClearRunHistory.AgeInMinutes);
-                            Log(string.Format("Clearing runs older than {0}", clearDate.ToLocalTime().ToLocalTime()));
+                            Log($"Clearing runs older than {clearDate.ToLocalTime().ToLocalTime()}, time-out: {clearRunsMASearcher.Options.Timeout.TotalSeconds}s");
                             object[] methodArgs = { clearDate.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:00") };
                             string clearRunsResult = (string)oReturn.InvokeMethod("ClearRuns", methodArgs);
                             Log(string.Format("Clear Runs Result: {0}", string.Format("Run result: {0}", clearRunsResult)));
@@ -623,6 +641,9 @@ public static int GetNodeCount(XmlDocument xmlDoc, string nodeName) {
             [XmlAttribute("LogFile")]
             public string LogFile { get; set; }
 
+            [XmlAttribute("WMITimeOutSeconds")]
+            public int WMITimeOutSeconds { get; set; }
+
             [XmlAttribute("LogDateTimeFormat")]
             public string LogDateTimeFormat { get; set; }
 
@@ -660,6 +681,9 @@ public static int GetNodeCount(XmlDocument xmlDoc, string nodeName) {
 
             [XmlAttribute("WaitMinutes")]
             public int WaitMinutes { get; set; }
+
+            [XmlAttribute("WMITimeOutSeconds")]
+            public int WMITimeOutSeconds { get; set; }
         }
 
         [Serializable]
@@ -667,6 +691,9 @@ public static int GetNodeCount(XmlDocument xmlDoc, string nodeName) {
         {
             public bool ClearRuns { get; set; }
             public int AgeInMinutes { get; set; }
+
+            [XmlAttribute("WMITimeOutSeconds")]
+            public int WMITimeOutSeconds { get; set; }
         }
 
         [Serializable]
@@ -680,6 +707,9 @@ public static int GetNodeCount(XmlDocument xmlDoc, string nodeName) {
 
             [XmlAttribute("RunOnDays")]
             public string RunOnDays { get; set; }
+
+            [XmlAttribute("WMITimeOutSeconds")]
+            public int WMITimeOutSeconds { get; set; }
 
             public ThresholdLimits ThresholdLimits { get; set; }
 
